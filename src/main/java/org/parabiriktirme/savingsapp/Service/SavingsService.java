@@ -39,59 +39,39 @@ public class SavingsService {
         BigDecimal totalIncome = incomeRepository.getTotalIncome();
         BigDecimal totalExpense = expenseRepository.getTotalExpense();
 
+        if (totalIncome == null) totalIncome = BigDecimal.ZERO;
+        if (totalExpense == null) totalExpense = BigDecimal.ZERO;
 
         BigDecimal netSavings = totalIncome.subtract(totalExpense);
 
 
-        BigDecimal remainingAmount = goal.getTargetAmount().subtract(goal.getCurrentAmount());
+        BigDecimal goalMonthlySavings = goal.getMonthlySavings() != null ? goal.getMonthlySavings() : BigDecimal.ZERO;
+        BigDecimal targetAvailableAmount = netSavings.subtract(goalMonthlySavings);
 
+        BigDecimal targetAmount = goal.getTargetAmount() != null ? goal.getTargetAmount() : BigDecimal.ZERO;
+        BigDecimal currentAmount = goal.getCurrentAmount() != null ? goal.getCurrentAmount() : BigDecimal.ZERO;
+        BigDecimal remainingAmount = targetAmount.subtract(currentAmount);
 
-        if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            return GoalCalculationResponse.builder()
-                    .goalId(goal.getId())
-                    .goalName(goal.getName())
-                    .targetAmount(goal.getTargetAmount())
-                    .currentAmount(goal.getCurrentAmount())
-                    .remainingAmount(BigDecimal.ZERO)
-                    .netSavings(netSavings)
-                    .estimatedMonthsLeft(0.0)
-                    .estimatedDaysLeft(0.0)
-                    .statusMessage("Tebrikler! Hedefinize ulaştınız.")
-                    .build();
+        BigDecimal dailyAvailableAmount = targetAvailableAmount.divide(BigDecimal.valueOf(30), 2, RoundingMode.HALF_UP);
+
+        int estimatedDaysLeft = 1;
+        if (dailyAvailableAmount.compareTo(BigDecimal.ZERO) > 0 && remainingAmount.compareTo(BigDecimal.ZERO) > 0) {
+            estimatedDaysLeft = remainingAmount.divide(dailyAvailableAmount, RoundingMode.CEILING).intValue();
         }
 
+        int estimatedMonthsLeft = (int) Math.ceil((double) estimatedDaysLeft / 30);
 
-        if (netSavings.compareTo(BigDecimal.ZERO) <= 0) {
-            return GoalCalculationResponse.builder()
-                    .goalId(goal.getId())
-                    .goalName(goal.getName())
-                    .targetAmount(goal.getTargetAmount())
-                    .currentAmount(goal.getCurrentAmount())
-                    .remainingAmount(remainingAmount)
-                    .netSavings(netSavings)
-                    .estimatedMonthsLeft(-1.0)
-                    .estimatedDaysLeft(-1.0)
-                    .statusMessage("Giderleriniz gelirinizden fazla veya eşit. Hedefe ulaşmak için harcamalarınızı kısmanız gerekiyor.")
-                    .build();
-        }
+        GoalCalculationResponse response = new GoalCalculationResponse();
+        response.setGoalName(goal.getName());
+        response.setTargetAmount(targetAmount);
+        response.setCurrentAmount(currentAmount);
+        response.setRemainingAmount(remainingAmount);
+        response.setNetSavings(netSavings);
+        response.setEstimatedMonthsLeft((double) estimatedMonthsLeft);
+        response.setEstimatedDaysLeft((double) estimatedDaysLeft);
+        response.setStatusMessage("Harika gidiyorsun! Bu hedefe yaklaşık " + estimatedDaysLeft + " günde ulaşabilirsin.");
 
-
-        BigDecimal monthsLeft = remainingAmount.divide(netSavings, 2, RoundingMode.HALF_UP);
-        double daysLeft = monthsLeft.doubleValue() * 30.0;
-
-        return GoalCalculationResponse.builder()
-                .goalId(goal.getId())
-                .goalName(goal.getName())
-                .targetAmount(goal.getTargetAmount())
-                .currentAmount(goal.getCurrentAmount())
-                .remainingAmount(remainingAmount)
-                .netSavings(netSavings)
-                .estimatedMonthsLeft(monthsLeft.doubleValue())
-                .estimatedDaysLeft(daysLeft)
-                .statusMessage(String.format("Mevcut harcama alışkanlıklarınızla hedefinize yaklaşık %.1f ay (%.0f gün) sonra ulaşabilirsiniz.", monthsLeft.doubleValue(), daysLeft))
-                .build();
+        return response;
     }
-
-
 
 }
