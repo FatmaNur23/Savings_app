@@ -2,6 +2,7 @@ package org.parabiriktirme.savingsapp.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -32,8 +33,14 @@ public class Goal {
     @Column(name="target_date")
     private LocalDate targetDate;
 
-    @Column(name="created_at",insertable = false, updatable = false)
+    @CreationTimestamp
+    @Column(name="created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    // Hedef dışı, kullanıcının aylık düzenli kenara ayırdığı birikim tutarı
+    @Column(name="monthly_savings", nullable = false)
+    private BigDecimal monthlySavings = BigDecimal.ZERO;
+
 
 
 }

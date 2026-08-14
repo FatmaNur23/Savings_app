@@ -31,4 +31,8 @@ public class Expense {
     @Column(name="category", nullable = false)
     private String category;
 
+    @Column(name="is_recurring")
+    private boolean isRecurring;
+
+
 }
