@@ -37,9 +37,14 @@ public class Goal {
     @Column(name="created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    // Hedef dışı, kullanıcının aylık düzenli kenara ayırdığı birikim tutarı
     @Column(name="monthly_savings", nullable = false)
     private BigDecimal monthlySavings = BigDecimal.ZERO;
+
+    @Column(name = "is_completed")
+    private boolean isCompleted = false;
+
+    @Column(name = "completed_date")
+    private LocalDate completedDate;
 
 
 
